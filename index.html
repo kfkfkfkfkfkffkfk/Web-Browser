@@ -1,28 +1,298 @@
-function navigate() {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Web Browser</title>
+    <style>
+        :root {
+            --bg-color: #f1f3f4;
+            --tab-color: #e8eaed;
+            --active-tab-color: #ffffff;
+            --border-color: #dadce0;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--active-tab-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Browser UI (The Chrome) --- */
+        #browser-ui {
+            background-color: var(--tab-color);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Tabs Area --- */
+        #tabs-container {
+            display: flex;
+            align-items: flex-end;
+            padding: 8px 8px 0 8px;
+            gap: 4px;
+            overflow-x: auto;
+        }
+
+        .tab {
+            background-color: var(--tab-color);
+            border: 1px solid transparent;
+            border-bottom: none;
+            padding: 8px 16px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px;
+            max-width: 200px;
+            font-size: 13px;
+            color: #3c4043;
+        }
+
+        .tab.active {
+            background-color: var(--active-tab-color);
+            border-color: var(--border-color);
+            font-weight: 500;
+        }
+
+        .tab:hover:not(.active) {
+            background-color: #dee1e6;
+        }
+
+        .tab-title {
+            flex-grow: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .close-tab {
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #5f6368;
+        }
+
+        .close-tab:hover {
+            background-color: #dadce0;
+        }
+
+        #new-tab-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 12px;
+            color: #5f6368;
+            border-radius: 50%;
+        }
+
+        #new-tab-btn:hover {
+            background-color: #dadce0;
+        }
+
+        /* --- Address Bar Area --- */
+        #address-bar {
+            display: flex;
+            padding: 8px;
+            background-color: var(--active-tab-color);
+            gap: 8px;
+            align-items: center;
+        }
+
+        #url-input {
+            flex-grow: 1;
+            padding: 8px 16px;
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            font-size: 14px;
+            outline: none;
+        }
+
+        #url-input:focus {
+            border-color: #1a73e8;
+            background-color: #ffffff;
+            box-shadow: 0 0 0 1px #1a73e8;
+        }
+
+        #go-btn {
+            padding: 8px 16px;
+            border-radius: 24px;
+            border: none;
+            background-color: #1a73e8;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        #go-btn:hover {
+            background-color: #1557b0;
+        }
+
+        /* --- Viewports (The actual web pages) --- */
+        #viewports-container {
+            flex-grow: 1;
+            position: relative;
+        }
+
+        .viewport {
+            width: 100%;
+            height: 100%;
+            border: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+            background-color: white;
+        }
+
+        .viewport.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="browser-ui">
+        <div id="tabs-container">
+            <button id="new-tab-btn" onclick="createNewTab()">+</button>
+        </div>
+        <div id="address-bar">
+            <input type="text" id="url-input" placeholder="Enter web address (e.g., example.com)" onkeypress="handleEnter(event)">
+            <button id="go-btn" onclick="navigate()">Go</button>
+        </div>
+    </div>
+
+    <div id="viewports-container">
+        </div>
+
+    <script>
+        let tabCount = 0;
+        let activeTabId = null;
+
+        // Start by creating one default tab
+        window.onload = () => {
+            createNewTab('https://en.wikipedia.org'); 
+        };
+
+        function createNewTab(defaultUrl = 'about:blank') {
+            tabCount++;
+            const tabId = 'tab-' + tabCount;
+            
+            // 1. Create the Tab UI
+            const tabBtn = document.createElement('div');
+            tabBtn.className = 'tab';
+            tabBtn.id = 'btn-' + tabId;
+            tabBtn.onclick = () => switchTab(tabId);
+            
+            const tabTitle = document.createElement('span');
+            tabTitle.className = 'tab-title';
+            tabTitle.innerText = defaultUrl === 'about:blank' ? 'New Tab' : 'Wikipedia';
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'close-tab';
+            closeBtn.innerText = '×';
+            closeBtn.onclick = (e) => {
+                e.stopPropagation(); 
+                closeTab(tabId);
+            };
+
+            tabBtn.appendChild(tabTitle);
+            tabBtn.appendChild(closeBtn);
+
+            const tabsContainer = document.getElementById('tabs-container');
+            const newTabBtn = document.getElementById('new-tab-btn');
+            tabsContainer.insertBefore(tabBtn, newTabBtn);
+
+            // 2. Create the iFrame (Viewport)
+            const iframe = document.createElement('iframe');
+            iframe.className = 'viewport';
+            iframe.id = 'view-' + tabId;
+            // If it's a real URL, run it through the proxy immediately
+            iframe.src = defaultUrl === 'about:blank' ? defaultUrl : 'https://corsproxy.io/?' + encodeURIComponent(defaultUrl);
+            document.getElementById('viewports-container').appendChild(iframe);
+
+            // 3. Switch to the new tab
+            switchTab(tabId);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.viewport').forEach(el => el.classList.remove('active'));
+
+            document.getElementById('btn-' + tabId).classList.add('active');
+            document.getElementById('view-' + tabId).classList.add('active');
+
+            activeTabId = tabId;
+
+            const activeIframe = document.getElementById('view-' + activeTabId);
+            const urlInput = document.getElementById('url-input');
+            
+            // Clean up the URL for the address bar so the user doesn't see the proxy junk
+            if (activeIframe.src === 'about:blank' || activeIframe.src === window.location.href) {
+                urlInput.value = '';
+            } else if (activeIframe.src.startsWith('https://corsproxy.io/?')) {
+                urlInput.value = decodeURIComponent(activeIframe.src.replace('https://corsproxy.io/?', ''));
+            } else {
+                urlInput.value = activeIframe.src;
+            }
+        }
+
+        function closeTab(tabId) {
+            const tabBtn = document.getElementById('btn-' + tabId);
+            const viewport = document.getElementById('view-' + tabId);
+            
+            tabBtn.remove();
+            viewport.remove();
+
+            if (activeTabId === tabId) {
+                const remainingTabs = document.querySelectorAll('.tab');
+                if (remainingTabs.length > 0) {
+                    const lastTabId = remainingTabs[remainingTabs.length - 1].id.replace('btn-', '');
+                    switchTab(lastTabId);
+                } else {
+                    activeTabId = null;
+                    document.getElementById('url-input').value = '';
+                    createNewTab(); 
+                }
+            }
+        }
+
+        function navigate() {
             if (!activeTabId) return;
 
             let url = document.getElementById('url-input').value.trim();
             
             if (!url) return;
 
-            // Basic check to add https:// if the user forgot it
             if (!url.startsWith('http://') && !url.startsWith('https://')) {
                 url = 'https://' + url;
             }
 
-            // THE FIX: Wrap the URL in a free public proxy to bypass X-Frame-Options
-            // encodeURIComponent ensures special characters in the URL don't break the proxy
+            // THE FIX: Route the request through corsproxy.io
             const proxiedUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
 
-            // Update the iframe with the proxied URL
             const activeIframe = document.getElementById('view-' + activeTabId);
             activeIframe.src = proxiedUrl;
 
-            // Update tab title
             const activeTabBtn = document.getElementById('btn-' + activeTabId);
             const tabTitle = activeTabBtn.querySelector('.tab-title');
             
-            // Extract a simple title from the original URL (e.g., "example.com")
             try {
                 const domain = new URL(url).hostname;
                 tabTitle.innerText = domain;
@@ -30,3 +300,12 @@ function navigate() {
                 tabTitle.innerText = url;
             }
         }
+
+        function handleEnter(event) {
+            if (event.key === 'Enter') {
+                navigate();
+            }
+        }
+    </script>
+</body>
+</html>
