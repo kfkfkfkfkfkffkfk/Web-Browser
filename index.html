@@ -1,311 +1,538 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Web Browser</title>
-    <style>
-        :root {
-            --bg-color: #f1f3f4;
-            --tab-color: #e8eaed;
-            --active-tab-color: #ffffff;
-            --border-color: #dadce0;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TabBrowser — Start Page</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--active-tab-color);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+:root{
+  --bg:#0d0d14;
+  --bg2:#13131f;
+  --bg3:#1a1a2c;
+  --border:#ffffff12;
+  --border-hover:#ffffff22;
+  --text:#f0f0f8;
+  --muted:#7a7a9a;
+  --accent:#6c63ff;
+  --accent2:#00d4aa;
+  --danger:#ff4d6d;
+  --card:#16162a;
+  --card-hover:#1e1e36;
+  --r:12px;
+  --r-sm:8px;
+  --font:'DM Sans',system-ui,sans-serif;
+  --mono:'DM Mono',monospace;
+}
 
-        /* --- Browser UI (The Chrome) --- */
-        #browser-ui {
-            background-color: var(--tab-color);
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-        }
+html,body{height:100%;width:100%;overflow-x:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
 
-        /* --- Tabs Area --- */
-        #tabs-container {
-            display: flex;
-            align-items: flex-end;
-            padding: 8px 8px 0 8px;
-            gap: 4px;
-            overflow-x: auto;
-        }
+a{text-decoration:none;color:inherit}
+button{font-family:var(--font);cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:var(--font)}
 
-        .tab {
-            background-color: var(--tab-color);
-            border: 1px solid transparent;
-            border-bottom: none;
-            padding: 8px 16px;
-            border-radius: 8px 8px 0 0;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            min-width: 120px;
-            max-width: 200px;
-            font-size: 13px;
-            color: #3c4043;
-        }
+/* ── GRID BG ── */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:40px 40px;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,black 40%,transparent 100%);
+}
 
-        .tab.active {
-            background-color: var(--active-tab-color);
-            border-color: var(--border-color);
-            font-weight: 500;
-        }
+/* ── GLOW ── */
+.glow{position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:800px;height:400px;
+  background:radial-gradient(ellipse,rgba(108,99,255,.18) 0%,transparent 70%);
+  pointer-events:none;z-index:0}
 
-        .tab:hover:not(.active) {
-            background-color: #dee1e6;
-        }
+main{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;padding:0 20px 60px}
 
-        .tab-title {
-            flex-grow: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+/* ── HEADER ── */
+header{width:100%;max-width:860px;display:flex;align-items:center;justify-content:space-between;padding:24px 0 0}
+.logo{font-size:15px;font-weight:600;color:var(--muted);letter-spacing:.04em}
+.logo span{color:var(--accent)}
+.header-time{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
 
-        .close-tab {
-            border: none;
-            background: none;
-            cursor: pointer;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #5f6368;
-        }
+/* ── CLOCK ── */
+.clock-section{text-align:center;padding:52px 0 44px;width:100%}
+.clock{font-size:clamp(64px,10vw,96px);font-weight:300;letter-spacing:-4px;line-height:1;color:var(--text)}
+.clock-date{font-size:15px;color:var(--muted);margin-top:10px;font-weight:400}
 
-        .close-tab:hover {
-            background-color: #dadce0;
-        }
+/* ── SEARCH ── */
+.search-wrap{width:100%;max-width:640px;margin:0 auto 48px}
+.search-box{
+  display:flex;align-items:center;gap:12px;
+  background:var(--card);border:1px solid var(--border-hover);
+  border-radius:100px;padding:10px 10px 10px 22px;
+  transition:border-color .2s,box-shadow .2s;
+}
+.search-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,99,255,.15)}
+.search-icon{color:var(--muted);flex-shrink:0;font-size:16px}
+.search-input{
+  flex:1;background:transparent;border:none;outline:none;
+  font-size:16px;color:var(--text);font-family:var(--font);
+}
+.search-input::placeholder{color:var(--muted)}
+.search-engine-sel{
+  background:var(--bg3);border:1px solid var(--border);border-radius:100px;
+  color:var(--muted);font-size:12px;padding:6px 10px;outline:none;cursor:pointer;
+  font-family:var(--font);
+}
+.search-engine-sel:hover{border-color:var(--border-hover)}
+.search-btn{
+  background:var(--accent);color:#fff;border-radius:100px;
+  padding:8px 20px;font-size:14px;font-weight:500;
+  transition:opacity .15s,transform .1s;flex-shrink:0;
+}
+.search-btn:hover{opacity:.88}
+.search-btn:active{transform:scale(.97)}
 
-        #new-tab-btn {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 4px 12px;
-            color: #5f6368;
-            border-radius: 50%;
-        }
+/* ── SECTIONS CONTAINER ── */
+.sections{width:100%;max-width:860px;display:flex;flex-direction:column;gap:36px}
 
-        #new-tab-btn:hover {
-            background-color: #dadce0;
-        }
+/* ── SECTION ── */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.section-action{font-size:12px;color:var(--accent);cursor:pointer;transition:opacity .15s}
+.section-action:hover{opacity:.75}
 
-        /* --- Address Bar Area --- */
-        #address-bar {
-            display: flex;
-            padding: 8px;
-            background-color: var(--active-tab-color);
-            gap: 8px;
-            align-items: center;
-        }
+/* ── QUICK LINKS ── */
+.quick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px}
+.quick-card{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:18px 10px 14px;border-radius:var(--r);
+  background:var(--card);border:1px solid var(--border);
+  cursor:pointer;transition:background .15s,border-color .15s,transform .15s;
+  text-align:center;
+}
+.quick-card:hover{background:var(--card-hover);border-color:var(--border-hover);transform:translateY(-2px)}
+.quick-card:active{transform:translateY(0)}
+.quick-favicon{width:28px;height:28px;border-radius:8px;object-fit:cover}
+.quick-favicon-placeholder{width:28px;height:28px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:15px}
+.quick-label{font-size:11.5px;color:var(--muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+.quick-add{border:1px dashed var(--border-hover)!important;color:var(--muted)}
+.quick-add:hover{border-color:var(--accent)!important;color:var(--accent)}
 
-        #url-input {
-            flex-grow: 1;
-            padding: 8px 16px;
-            border-radius: 24px;
-            border: 1px solid var(--border-color);
-            background-color: var(--bg-color);
-            font-size: 14px;
-            outline: none;
-        }
+/* ── BOOKMARKS ── */
+.bk-list{display:flex;flex-direction:column;gap:6px}
+.bk-item{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 14px;border-radius:var(--r-sm);
+  background:var(--card);border:1px solid var(--border);
+  cursor:pointer;transition:background .15s,border-color .15s;
+  text-decoration:none;color:var(--text);
+}
+.bk-item:hover{background:var(--card-hover);border-color:var(--border-hover)}
+.bk-favicon{width:16px;height:16px;border-radius:4px;flex-shrink:0}
+.bk-title{font-size:13.5px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bk-url{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px}
+.bk-del{opacity:0;color:var(--muted);font-size:16px;transition:opacity .15s,color .15s;padding:4px;border-radius:4px;flex-shrink:0}
+.bk-item:hover .bk-del{opacity:1}
+.bk-del:hover{color:var(--danger)}
+.bk-empty{font-size:13px;color:var(--muted);text-align:center;padding:28px;border:1px dashed var(--border);border-radius:var(--r);line-height:1.7}
 
-        #url-input:focus {
-            border-color: #1a73e8;
-            background-color: #ffffff;
-            box-shadow: 0 0 0 1px #1a73e8;
-        }
+/* ── RECENTS ── */
+.recent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.recent-card{
+  padding:14px;border-radius:var(--r-sm);
+  background:var(--card);border:1px solid var(--border);
+  cursor:pointer;transition:background .15s,border-color .15s;
+  overflow:hidden;
+}
+.recent-card:hover{background:var(--card-hover);border-color:var(--border-hover)}
+.recent-host{font-size:11px;color:var(--accent2);font-weight:500;margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.recent-title{font-size:13px;font-weight:500;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.4}
+.recent-time{font-size:11px;color:var(--muted);margin-top:6px}
 
-        #go-btn {
-            padding: 8px 16px;
-            border-radius: 24px;
-            border: none;
-            background-color: #1a73e8;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-        }
+/* ── MODAL ── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;z-index:1000;
+  background:rgba(0,0,0,.65);align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--bg2);border:1px solid var(--border-hover);border-radius:var(--r);
+  padding:28px;width:100%;max-width:420px;display:flex;flex-direction:column;gap:16px;
+  position:relative;
+}
+.modal-title{font-size:16px;font-weight:600}
+.modal-close{position:absolute;top:16px;right:16px;color:var(--muted);font-size:20px;line-height:1}
+.modal-input{
+  width:100%;background:var(--bg3);border:1px solid var(--border-hover);border-radius:var(--r-sm);
+  padding:10px 14px;color:var(--text);font-size:14px;outline:none;font-family:var(--font);
+}
+.modal-input:focus{border-color:var(--accent)}
+.modal-row{display:flex;gap:10px}
+.modal-btn{
+  flex:1;padding:10px;border-radius:var(--r-sm);font-size:14px;font-weight:500;
+  transition:opacity .15s;
+}
+.modal-btn-primary{background:var(--accent);color:#fff}
+.modal-btn-primary:hover{opacity:.85}
+.modal-btn-secondary{background:var(--bg3);color:var(--muted);border:1px solid var(--border)}
+.modal-btn-secondary:hover{border-color:var(--border-hover);color:var(--text)}
 
-        #go-btn:hover {
-            background-color: #1557b0;
-        }
+/* ── FOOTER ── */
+footer{position:relative;z-index:1;text-align:center;padding:20px;font-size:12px;color:var(--muted);border-top:1px solid var(--border)}
+footer a{color:var(--muted);transition:color .15s}
+footer a:hover{color:var(--accent)}
 
-        /* --- Viewports (The actual web pages) --- */
-        #viewports-container {
-            flex-grow: 1;
-            position: relative;
-        }
+/* ── SETTINGS SIDEBAR ── */
+.sidebar{
+  position:fixed;right:0;top:0;bottom:0;width:280px;z-index:500;
+  background:var(--bg2);border-left:1px solid var(--border-hover);
+  transform:translateX(100%);transition:transform .25s ease;
+  display:flex;flex-direction:column;padding:24px;gap:20px;overflow-y:auto;
+}
+.sidebar.open{transform:translateX(0)}
+.sidebar-title{font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:space-between}
+.sidebar-close{color:var(--muted);font-size:20px}
+.sidebar-section{display:flex;flex-direction:column;gap:10px}
+.sidebar-label{font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.sidebar-row{display:flex;align-items:center;justify-content:space-between;font-size:13.5px}
+.tog{position:relative;width:38px;height:22px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0}
+.tog-sl{position:absolute;inset:0;background:#333;border-radius:11px;cursor:pointer;transition:background .2s}
+.tog-sl::before{content:'';position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .2s}
+.tog input:checked+.tog-sl{background:var(--accent)}
+.tog input:checked+.tog-sl::before{transform:translateX(16px)}
 
-        .viewport {
-            width: 100%;
-            height: 100%;
-            border: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            display: none;
-            background-color: white;
-        }
+/* ── GEAR BTN ── */
+.gear-btn{
+  position:fixed;bottom:24px;right:24px;z-index:400;
+  width:44px;height:44px;border-radius:50%;
+  background:var(--card);border:1px solid var(--border-hover);
+  color:var(--muted);font-size:20px;
+  display:flex;align-items:center;justify-content:center;
+  transition:color .15s,border-color .15s,transform .2s;
+  cursor:pointer;
+}
+.gear-btn:hover{color:var(--text);border-color:var(--accent);transform:rotate(30deg)}
 
-        .viewport.active {
-            display: block;
-        }
-    </style>
+@media(max-width:600px){
+  .quick-grid{grid-template-columns:repeat(4,1fr)}
+  .recent-grid{grid-template-columns:1fr 1fr}
+  .bk-url{display:none}
+  .clock{font-size:56px}
+}
+</style>
 </head>
 <body>
 
-    <div id="browser-ui">
-        <div id="tabs-container">
-            <button id="new-tab-btn" onclick="createNewTab()">+</button>
-        </div>
-        <div id="address-bar">
-            <input type="text" id="url-input" placeholder="Enter web address (e.g., example.com)" onkeypress="handleEnter(event)">
-            <button id="go-btn" onclick="navigate()">Go</button>
-        </div>
+<div class="glow"></div>
+
+<main>
+  <header>
+    <div class="logo">Tab<span>Browser</span></div>
+    <div class="header-time" id="header-time"></div>
+  </header>
+
+  <div class="clock-section">
+    <div class="clock" id="clock"></div>
+    <div class="clock-date" id="clock-date"></div>
+  </div>
+
+  <div class="search-wrap">
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="search-input" id="search-input" type="text" placeholder="Search the web or type a URL…" autocomplete="off" spellcheck="false"/>
+      <select class="search-engine-sel" id="engine-sel" onchange="saveEngine()">
+        <option value="https://www.google.com/search?q=">Google</option>
+        <option value="https://search.brave.com/search?q=">Brave</option>
+        <option value="https://duckduckgo.com/?q=">DuckDuckGo</option>
+        <option value="https://www.bing.com/search?q=">Bing</option>
+        <option value="https://search.yahoo.com/search?p=">Yahoo</option>
+      </select>
+      <button class="search-btn" onclick="doSearch()">Search</button>
+    </div>
+  </div>
+
+  <div class="sections">
+
+    <!-- QUICK LINKS -->
+    <div>
+      <div class="section-header">
+        <div class="section-title">Quick links</div>
+        <div class="section-action" onclick="openAddQuick()">+ Add</div>
+      </div>
+      <div class="quick-grid" id="quick-grid"></div>
     </div>
 
-    <div id="viewports-container">
-        </div>
+    <!-- BOOKMARKS -->
+    <div>
+      <div class="section-header">
+        <div class="section-title">Bookmarks</div>
+        <div class="section-action" onclick="openAddBookmark()">+ Add</div>
+      </div>
+      <div class="bk-list" id="bk-list"></div>
+    </div>
 
-    <script>
-        let tabCount = 0;
-        let activeTabId = null;
+    <!-- RECENTS -->
+    <div id="recents-section" style="display:none">
+      <div class="section-header">
+        <div class="section-title">Recently visited</div>
+        <div class="section-action" onclick="clearRecents()">Clear</div>
+      </div>
+      <div class="recent-grid" id="recent-grid"></div>
+    </div>
 
-        // Start by creating one default tab
-        window.onload = () => {
-            createNewTab('https://en.wikipedia.org'); 
-        };
+  </div>
+</main>
 
-        function createNewTab(defaultUrl = 'about:blank') {
-            tabCount++;
-            const tabId = 'tab-' + tabCount;
-            
-            // 1. Create the Tab UI
-            const tabBtn = document.createElement('div');
-            tabBtn.className = 'tab';
-            tabBtn.id = 'btn-' + tabId;
-            tabBtn.onclick = () => switchTab(tabId);
-            
-            const tabTitle = document.createElement('span');
-            tabTitle.className = 'tab-title';
-            tabTitle.innerText = defaultUrl === 'about:blank' ? 'New Tab' : 'Wikipedia';
-            
-            const closeBtn = document.createElement('button');
-            closeBtn.className = 'close-tab';
-            closeBtn.innerText = '×';
-            closeBtn.onclick = (e) => {
-                e.stopPropagation(); 
-                closeTab(tabId);
-            };
+<footer>
+  Set this page as your browser homepage &mdash;
+  <a href="https://support.google.com/chrome/answer/95314" target="_blank">Chrome</a> &middot;
+  <a href="https://support.mozilla.org/en-US/kb/how-to-set-the-home-page" target="_blank">Firefox</a> &middot;
+  <a href="https://support.apple.com/guide/safari/set-your-homepage-ibrw1020/mac" target="_blank">Safari</a> &middot;
+  <a href="https://support.microsoft.com/en-us/microsoft-edge/change-your-browser-home-page-a531b1f5-3b13-4049-d883-de6e7f5cf408" target="_blank">Edge</a>
+</footer>
 
-            tabBtn.appendChild(tabTitle);
-            tabBtn.appendChild(closeBtn);
+<!-- GEAR -->
+<button class="gear-btn" onclick="toggleSidebar()" title="Settings">
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+</button>
 
-            const tabsContainer = document.getElementById('tabs-container');
-            const newTabBtn = document.getElementById('new-tab-btn');
-            tabsContainer.insertBefore(tabBtn, newTabBtn);
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-title">
+    Settings
+    <button class="sidebar-close" onclick="toggleSidebar()">&#10005;</button>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Display</div>
+    <div class="sidebar-row">
+      <span>Show recents</span>
+      <label class="tog"><input type="checkbox" id="tog-recents" onchange="toggleRecents(this.checked)"><span class="tog-sl"></span></label>
+    </div>
+    <div class="sidebar-row">
+      <span>Show 24-hour clock</span>
+      <label class="tog"><input type="checkbox" id="tog-24h" onchange="save24h(this.checked)"><span class="tog-sl"></span></label>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Data</div>
+    <button class="modal-btn modal-btn-secondary" onclick="exportData()">Export settings</button>
+    <button class="modal-btn modal-btn-secondary" onclick="clearAll()">Reset everything</button>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Tip</div>
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.7">
+      Set this as your browser homepage so it opens every new window. Links open in real browser tabs — full Google, YouTube, everything works.
+    </div>
+  </div>
+</div>
 
-            // 2. Create the iFrame (Viewport)
-            const iframe = document.createElement('iframe');
-            iframe.className = 'viewport';
-            iframe.id = 'view-' + tabId;
-            // If it's a real URL, run it through the proxy immediately
-            iframe.src = defaultUrl === 'about:blank' ? defaultUrl : 'https://corsproxy.io/?' + encodeURIComponent(defaultUrl);
-            document.getElementById('viewports-container').appendChild(iframe);
+<!-- ADD QUICK LINK MODAL -->
+<div class="modal-overlay" id="modal-quick">
+  <div class="modal">
+    <div class="modal-title">Add quick link</div>
+    <button class="modal-close" onclick="closeModal('modal-quick')">&#10005;</button>
+    <input class="modal-input" id="ql-title" placeholder="Label (e.g. YouTube)" maxlength="20"/>
+    <input class="modal-input" id="ql-url" placeholder="URL (e.g. https://youtube.com)"/>
+    <div class="modal-row">
+      <button class="modal-btn modal-btn-secondary" onclick="closeModal('modal-quick')">Cancel</button>
+      <button class="modal-btn modal-btn-primary" onclick="addQuickLink()">Add link</button>
+    </div>
+  </div>
+</div>
 
-            // 3. Switch to the new tab
-            switchTab(tabId);
-        }
+<!-- ADD BOOKMARK MODAL -->
+<div class="modal-overlay" id="modal-bk">
+  <div class="modal">
+    <div class="modal-title">Add bookmark</div>
+    <button class="modal-close" onclick="closeModal('modal-bk')">&#10005;</button>
+    <input class="modal-input" id="bk-title-inp" placeholder="Title"/>
+    <input class="modal-input" id="bk-url-inp" placeholder="URL (e.g. https://github.com)"/>
+    <div class="modal-row">
+      <button class="modal-btn modal-btn-secondary" onclick="closeModal('modal-bk')">Cancel</button>
+      <button class="modal-btn modal-btn-primary" onclick="addBookmark()">Save bookmark</button>
+    </div>
+  </div>
+</div>
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.viewport').forEach(el => el.classList.remove('active'));
+<script>
+const DEFAULT_QUICK=[
+  {label:'Google',   url:'https://www.google.com'},
+  {label:'YouTube',  url:'https://www.youtube.com'},
+  {label:'Reddit',   url:'https://www.reddit.com'},
+  {label:'GitHub',   url:'https://github.com'},
+  {label:'Twitter',  url:'https://twitter.com'},
+  {label:'Wikipedia',url:'https://en.wikipedia.org'},
+  {label:'Amazon',   url:'https://www.amazon.com'},
+  {label:'Gmail',    url:'https://mail.google.com'},
+];
+const DEFAULT_BK=[
+  {title:'Hacker News',    url:'https://news.ycombinator.com'},
+  {title:'Google Drive',   url:'https://drive.google.com'},
+  {title:'Claude AI',      url:'https://claude.ai'},
+];
 
-            document.getElementById('btn-' + tabId).classList.add('active');
-            document.getElementById('view-' + tabId).classList.add('active');
+function load(k,def){try{const v=localStorage.getItem(k);return v?JSON.parse(v):def}catch{return def}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
 
-            activeTabId = tabId;
+let quickLinks=load('tb_quick',DEFAULT_QUICK);
+let bookmarks=load('tb_bk',DEFAULT_BK);
+let recents=load('tb_recents',[]);
+let use24h=load('tb_24h',false);
+let showRecents=load('tb_showRecents',false);
 
-            const activeIframe = document.getElementById('view-' + activeTabId);
-            const urlInput = document.getElementById('url-input');
-            
-            // Clean up the URL for the address bar so the user doesn't see the proxy junk
-            if (activeIframe.src === 'about:blank' || activeIframe.src === window.location.href) {
-                urlInput.value = '';
-            } else if (activeIframe.src.startsWith('https://corsproxy.io/?')) {
-                urlInput.value = decodeURIComponent(activeIframe.src.replace('https://corsproxy.io/?', ''));
-            } else {
-                urlInput.value = activeIframe.src;
-            }
-        }
+function favUrl(url){try{return'https://www.google.com/s2/favicons?sz=32&domain='+encodeURIComponent(new URL(url).hostname)}catch{return''}}
 
-        function closeTab(tabId) {
-            const tabBtn = document.getElementById('btn-' + tabId);
-            const viewport = document.getElementById('view-' + tabId);
-            
-            tabBtn.remove();
-            viewport.remove();
+function renderQuick(){
+  const g=document.getElementById('quick-grid');
+  g.innerHTML=quickLinks.map((q,i)=>`
+    <div class="quick-card" onclick="openUrl('${esc(q.url)}','${esc(q.label)}')">
+      <img class="quick-favicon" src="${favUrl(q.url)}" onerror="this.style.display='none'"  alt="">
+      <div class="quick-label">${esc(q.label)}</div>
+    </div>
+  `).join('');
+}
 
-            if (activeTabId === tabId) {
-                const remainingTabs = document.querySelectorAll('.tab');
-                if (remainingTabs.length > 0) {
-                    const lastTabId = remainingTabs[remainingTabs.length - 1].id.replace('btn-', '');
-                    switchTab(lastTabId);
-                } else {
-                    activeTabId = null;
-                    document.getElementById('url-input').value = '';
-                    createNewTab(); 
-                }
-            }
-        }
+function renderBookmarks(){
+  const el=document.getElementById('bk-list');
+  if(!bookmarks.length){
+    el.innerHTML=`<div class="bk-empty">No bookmarks yet.<br>Click <b>+ Add</b> to save your favourite sites.</div>`;
+    return;
+  }
+  el.innerHTML=bookmarks.map((b,i)=>`
+    <a class="bk-item" href="${esc(b.url)}" target="_blank" onclick="trackVisit('${esc(b.url)}','${esc(b.title)}')">
+      <img class="bk-favicon" src="${favUrl(b.url)}" onerror="this.style.display='none'" alt="">
+      <div class="bk-title">${esc(b.title)}</div>
+      <div class="bk-url">${esc(b.url)}</div>
+      <button class="bk-del" onclick="delBookmark(event,${i})" title="Remove">&#10005;</button>
+    </a>
+  `).join('');
+}
 
-        function navigate() {
-            if (!activeTabId) return;
+function renderRecents(){
+  const sec=document.getElementById('recents-section');
+  const g=document.getElementById('recent-grid');
+  if(!showRecents||!recents.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  g.innerHTML=recents.slice(0,8).map(r=>`
+    <div class="recent-card" onclick="openUrl('${esc(r.url)}','${esc(r.title)}')">
+      <div class="recent-host">
+        <img src="${favUrl(r.url)}" width="12" height="12" style="border-radius:3px" onerror="this.style.display='none'" alt="">
+        ${esc(hostname(r.url))}
+      </div>
+      <div class="recent-title">${esc(r.title)}</div>
+      <div class="recent-time">${timeAgo(r.ts)}</div>
+    </div>
+  `).join('');
+}
 
-            let url = document.getElementById('url-input').value.trim();
-            
-            if (!url) return;
+function hostname(url){try{return new URL(url).hostname.replace('www.','')}catch{return url}}
+function timeAgo(ts){
+  const s=Math.floor((Date.now()-ts)/1000);
+  if(s<60)return'just now';
+  if(s<3600)return Math.floor(s/60)+'m ago';
+  if(s<86400)return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
 
-            if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                url = 'https://' + url;
-            }
+function openUrl(url,title){
+  trackVisit(url,title);
+  window.open(url,'_blank');
+}
+function trackVisit(url,title){
+  recents=recents.filter(r=>r.url!==url);
+  recents.unshift({url,title,ts:Date.now()});
+  if(recents.length>20)recents=recents.slice(0,20);
+  save('tb_recents',recents);
+  renderRecents();
+}
 
-            // THE FIX: Route the request through corsproxy.io
-            const proxiedUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+function doSearch(){
+  const v=document.getElementById('search-input').value.trim();
+  if(!v)return;
+  const engine=document.getElementById('engine-sel').value;
+  let url;
+  if(/^https?:\/\//i.test(v))url=v;
+  else if(/^[a-z0-9-]+(\.[a-z]{2,})(\/|$)/i.test(v))url='https://'+v;
+  else url=engine+encodeURIComponent(v);
+  trackVisit(url,v);
+  window.open(url,'_blank');
+}
 
-            const activeIframe = document.getElementById('view-' + activeTabId);
-            activeIframe.src = proxiedUrl;
+document.getElementById('search-input').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch()});
 
-            const activeTabBtn = document.getElementById('btn-' + activeTabId);
-            const tabTitle = activeTabBtn.querySelector('.tab-title');
-            
-            try {
-                const domain = new URL(url).hostname;
-                tabTitle.innerText = domain;
-            } catch (e) {
-                tabTitle.innerText = url;
-            }
-        }
+function saveEngine(){save('tb_engine',document.getElementById('engine-sel').value)}
+function loadEngine(){
+  const e=load('tb_engine',null);
+  if(e)document.getElementById('engine-sel').value=e;
+}
 
-        function handleEnter(event) {
-            if (event.key === 'Enter') {
-                navigate();
-            }
-        }
-    </script>
+function delBookmark(e,i){e.preventDefault();e.stopPropagation();bookmarks.splice(i,1);save('tb_bk',bookmarks);renderBookmarks()}
+
+function openAddQuick(){document.getElementById('ql-title').value='';document.getElementById('ql-url').value='';document.getElementById('modal-quick').classList.add('open')}
+function openAddBookmark(){document.getElementById('bk-title-inp').value='';document.getElementById('bk-url-inp').value='';document.getElementById('modal-bk').classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+function addQuickLink(){
+  const t=document.getElementById('ql-title').value.trim();
+  let u=document.getElementById('ql-url').value.trim();
+  if(!t||!u)return;
+  if(!/^https?:\/\//i.test(u))u='https://'+u;
+  quickLinks.push({label:t,url:u});
+  save('tb_quick',quickLinks);
+  renderQuick();
+  closeModal('modal-quick');
+}
+function addBookmark(){
+  const t=document.getElementById('bk-title-inp').value.trim();
+  let u=document.getElementById('bk-url-inp').value.trim();
+  if(!t||!u)return;
+  if(!/^https?:\/\//i.test(u))u='https://'+u;
+  bookmarks.push({title:t,url:u});
+  save('tb_bk',bookmarks);
+  renderBookmarks();
+  closeModal('modal-bk');
+}
+
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open')}));
+
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open')}
+function toggleRecents(v){showRecents=v;save('tb_showRecents',v);renderRecents()}
+function save24h(v){use24h=v;save('tb_24h',v);updateClock()}
+function clearRecents(){recents=[];save('tb_recents',[]);renderRecents()}
+function clearAll(){if(confirm('Reset all TabBrowser data?')){localStorage.clear();location.reload()}}
+function exportData(){
+  const data=JSON.stringify({quickLinks,bookmarks},null,2);
+  const a=document.createElement('a');
+  a.href='data:text/json,'+encodeURIComponent(data);
+  a.download='tabbrowser-data.json';a.click();
+}
+
+function updateClock(){
+  const now=new Date();
+  const t=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:!use24h});
+  document.getElementById('clock').textContent=t;
+  document.getElementById('clock-date').textContent=now.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  document.getElementById('header-time').textContent=now.toLocaleDateString([],{month:'short',day:'numeric'});
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+
+function init(){
+  loadEngine();
+  document.getElementById('tog-recents').checked=showRecents;
+  document.getElementById('tog-24h').checked=use24h;
+  renderQuick();
+  renderBookmarks();
+  renderRecents();
+  updateClock();
+  setInterval(updateClock,5000);
+}
+
+init();
+</script>
 </body>
 </html>
