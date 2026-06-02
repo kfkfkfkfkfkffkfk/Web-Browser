@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TabBrowser — Start Page</title>
+<title>ZXYweb — Start Page</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -147,6 +147,94 @@ header{width:100%;max-width:860px;display:flex;align-items:center;justify-conten
 .recent-title{font-size:13px;font-weight:500;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.4}
 .recent-time{font-size:11px;color:var(--muted);margin-top:6px}
 
+/* ── BROWSER OVERLAY ── */
+#browser-overlay{
+  display:none;position:fixed;inset:0;z-index:900;
+  flex-direction:column;background:var(--bg);
+}
+#browser-overlay.open{display:flex}
+
+/* ── BROWSER TOOLBAR ── */
+.browser-bar{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;
+  background:var(--bg2);
+  border-bottom:1px solid var(--border-hover);
+  flex-shrink:0;
+}
+.browser-btn{
+  width:34px;height:34px;border-radius:var(--r-sm);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--muted);transition:background .15s,color .15s;
+  flex-shrink:0;cursor:pointer;
+}
+.browser-btn:hover{background:var(--card);color:var(--text)}
+.browser-btn:disabled{opacity:.3;cursor:default;pointer-events:none}
+.browser-btn svg{pointer-events:none}
+
+.browser-url-wrap{
+  flex:1;display:flex;align-items:center;gap:8px;
+  background:var(--card);border:1px solid var(--border-hover);
+  border-radius:100px;padding:7px 16px;
+  transition:border-color .2s;
+}
+.browser-url-wrap:focus-within{border-color:var(--accent)}
+.browser-url-input{
+  flex:1;background:transparent;border:none;outline:none;
+  font-size:13.5px;color:var(--text);font-family:var(--mono);
+}
+.browser-url-input::placeholder{color:var(--muted)}
+.browser-lock{color:var(--accent2);flex-shrink:0}
+.browser-lock-off{color:var(--muted)}
+
+.browser-go-btn{
+  background:var(--accent);color:#fff;border-radius:100px;
+  padding:7px 18px;font-size:13px;font-weight:500;flex-shrink:0;
+  transition:opacity .15s;
+}
+.browser-go-btn:hover{opacity:.85}
+
+.browser-home-btn{
+  background:transparent;color:var(--muted);border:1px solid var(--border-hover);
+  border-radius:100px;padding:7px 14px;font-size:13px;font-weight:500;flex-shrink:0;
+  transition:border-color .15s,color .15s;
+  display:flex;align-items:center;gap:6px;
+}
+.browser-home-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── IFRAME ── */
+#browser-frame{
+  flex:1;width:100%;border:none;
+  background:#fff;
+}
+
+/* Loading bar */
+.browser-progress{
+  height:2px;background:var(--accent);width:0%;
+  transition:width .3s ease, opacity .3s;
+  position:absolute;top:0;left:0;right:0;
+  pointer-events:none;z-index:10;
+  border-radius:0 2px 2px 0;
+}
+
+/* Blocked overlay */
+#blocked-msg{
+  display:none;position:absolute;inset:57px 0 0 0;
+  background:var(--bg);
+  align-items:center;justify-content:center;flex-direction:column;
+  gap:16px;z-index:5;text-align:center;padding:40px;
+}
+#blocked-msg.show{display:flex}
+.blocked-icon{font-size:48px;margin-bottom:4px}
+.blocked-title{font-size:20px;font-weight:600}
+.blocked-desc{font-size:14px;color:var(--muted);max-width:420px;line-height:1.7}
+.blocked-open-btn{
+  background:var(--accent);color:#fff;border-radius:100px;
+  padding:10px 24px;font-size:14px;font-weight:500;
+  transition:opacity .15s;margin-top:4px;
+}
+.blocked-open-btn:hover{opacity:.85}
+
 /* ── MODAL ── */
 .modal-overlay{
   display:none;position:fixed;inset:0;z-index:1000;
@@ -217,6 +305,7 @@ footer a:hover{color:var(--accent)}
   .recent-grid{grid-template-columns:1fr 1fr}
   .bk-url{display:none}
   .clock{font-size:56px}
+  .browser-url-input{font-size:12px}
 }
 </style>
 </head>
@@ -226,7 +315,7 @@ footer a:hover{color:var(--accent)}
 
 <main>
   <header>
-    <div class="logo">Tab<span>Browser</span></div>
+    <div class="logo">ZXY<span>web</span></div>
     <div class="header-time" id="header-time"></div>
   </header>
 
@@ -292,6 +381,60 @@ footer a:hover{color:var(--accent)}
   <a href="https://support.microsoft.com/en-us/microsoft-edge/change-your-browser-home-page-a531b1f5-3b13-4049-d883-de6e7f5cf408" target="_blank">Edge</a>
 </footer>
 
+<!-- ── BROWSER OVERLAY ── -->
+<div id="browser-overlay">
+  <!-- Progress bar -->
+  <div class="browser-progress" id="browser-progress"></div>
+
+  <!-- Toolbar -->
+  <div class="browser-bar">
+    <!-- Back -->
+    <button class="browser-btn" id="btn-back" onclick="frameBack()" title="Back" disabled>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <!-- Forward -->
+    <button class="browser-btn" id="btn-fwd" onclick="frameForward()" title="Forward" disabled>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <!-- Reload -->
+    <button class="browser-btn" id="btn-reload" onclick="frameReload()" title="Reload">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    </button>
+
+    <!-- URL bar -->
+    <div class="browser-url-wrap">
+      <svg class="browser-lock" id="url-lock" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      <input class="browser-url-input" id="browser-url-input" type="text" placeholder="Search or enter URL…" spellcheck="false" autocomplete="off"/>
+    </div>
+
+    <button class="browser-go-btn" onclick="navigateTo(document.getElementById('browser-url-input').value)">Go</button>
+
+    <!-- Home -->
+    <button class="browser-home-btn" onclick="closeBrowser()">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Home
+    </button>
+
+    <!-- Open in real tab -->
+    <button class="browser-btn" onclick="openInRealTab()" title="Open in new tab">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+    </button>
+  </div>
+
+  <!-- Blocked message shown when iframe is blocked by X-Frame-Options -->
+  <div id="blocked-msg">
+    <div class="blocked-icon">🚫</div>
+    <div class="blocked-title">This site can't be shown here</div>
+    <div class="blocked-desc" id="blocked-desc">Some websites block being embedded for security reasons. You can open it in a real browser tab instead.</div>
+    <button class="blocked-open-btn" onclick="openInRealTab()">Open in real tab ↗</button>
+  </div>
+
+  <!-- iframe -->
+  <iframe id="browser-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation" referrerpolicy="no-referrer"></iframe>
+</div>
+
 <!-- GEAR -->
 <button class="gear-btn" onclick="toggleSidebar()" title="Settings">
   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -325,7 +468,7 @@ footer a:hover{color:var(--accent)}
   <div class="sidebar-section">
     <div class="sidebar-label">Tip</div>
     <div style="font-size:12.5px;color:var(--muted);line-height:1.7">
-      Set this as your browser homepage so it opens every new window. Links open in real browser tabs — full Google, YouTube, everything works.
+      Set this as your browser homepage so it opens every new window. Searches load right here in ZXYweb. If a site blocks embedding, use the ↗ button to open it in a real tab.
     </div>
   </div>
 </div>
@@ -384,13 +527,19 @@ let recents=load('tb_recents',[]);
 let use24h=load('tb_24h',false);
 let showRecents=load('tb_showRecents',false);
 
+// Browser overlay state
+let currentUrl='';
+let frameHistory=[];
+let frameIndex=-1;
+let loadTimer=null;
+
 function favUrl(url){try{return'https://www.google.com/s2/favicons?sz=32&domain='+encodeURIComponent(new URL(url).hostname)}catch{return''}}
 
 function renderQuick(){
   const g=document.getElementById('quick-grid');
   g.innerHTML=quickLinks.map((q,i)=>`
     <div class="quick-card" onclick="openUrl('${esc(q.url)}','${esc(q.label)}')">
-      <img class="quick-favicon" src="${favUrl(q.url)}" onerror="this.style.display='none'"  alt="">
+      <img class="quick-favicon" src="${favUrl(q.url)}" onerror="this.style.display='none'" alt="">
       <div class="quick-label">${esc(q.label)}</div>
     </div>
   `).join('');
@@ -403,12 +552,12 @@ function renderBookmarks(){
     return;
   }
   el.innerHTML=bookmarks.map((b,i)=>`
-    <a class="bk-item" href="${esc(b.url)}" target="_blank" onclick="trackVisit('${esc(b.url)}','${esc(b.title)}')">
+    <div class="bk-item" onclick="openUrl('${esc(b.url)}','${esc(b.title)}')">
       <img class="bk-favicon" src="${favUrl(b.url)}" onerror="this.style.display='none'" alt="">
       <div class="bk-title">${esc(b.title)}</div>
       <div class="bk-url">${esc(b.url)}</div>
       <button class="bk-del" onclick="delBookmark(event,${i})" title="Remove">&#10005;</button>
-    </a>
+    </div>
   `).join('');
 }
 
@@ -438,18 +587,162 @@ function timeAgo(ts){
   return Math.floor(s/86400)+'d ago';
 }
 
+/* ── BROWSER OVERLAY ── */
 function openUrl(url,title){
   trackVisit(url,title);
-  window.open(url,'_blank');
-}
-function trackVisit(url,title){
-  recents=recents.filter(r=>r.url!==url);
-  recents.unshift({url,title,ts:Date.now()});
-  if(recents.length>20)recents=recents.slice(0,20);
-  save('tb_recents',recents);
-  renderRecents();
+  loadInBrowser(url,title,true);
 }
 
+function loadInBrowser(url,title,pushHistory){
+  currentUrl=url;
+  const overlay=document.getElementById('browser-overlay');
+  const frame=document.getElementById('browser-frame');
+  const urlInput=document.getElementById('browser-url-input');
+  const blockedMsg=document.getElementById('blocked-msg');
+  const lockIcon=document.getElementById('url-lock');
+
+  overlay.classList.add('open');
+  blockedMsg.classList.remove('show');
+  frame.style.display='block';
+  urlInput.value=url;
+
+  // Lock icon - green for https, muted for http
+  if(url.startsWith('https://')){
+    lockIcon.style.color='var(--accent2)';
+    lockIcon.title='Secure connection';
+  } else {
+    lockIcon.style.color='var(--muted)';
+    lockIcon.title='Not secure';
+  }
+
+  // Update page title
+  try{
+    const host=new URL(url).hostname.replace('www.','');
+    document.title=title||host+' — ZXYweb';
+  }catch{document.title='ZXYweb';}
+
+  // Push history for back/forward
+  if(pushHistory){
+    frameHistory=frameHistory.slice(0,frameIndex+1);
+    frameHistory.push(url);
+    frameIndex=frameHistory.length-1;
+  }
+  updateNavBtns();
+
+  // Progress bar animation
+  startProgress();
+
+  // Load the iframe
+  frame.src=url;
+
+  // Detect if blocked (X-Frame-Options / CSP) via error on load
+  // We set a timeout — if onload fires quickly with no content, likely blocked
+  frame.onload=function(){
+    stopProgress();
+    // Try to detect empty/blocked frame
+    try{
+      const doc=frame.contentDocument||frame.contentWindow.document;
+      if(!doc||doc.body===null||doc.body.innerHTML.trim()===''){
+        showBlocked(url);
+      }
+    }catch(e){
+      // Cross-origin — frame loaded but we can't inspect. That's fine, content is showing.
+      // If it was blocked by X-Frame-Options the browser shows a blank frame, not a cross-origin page.
+      // We'll trust the load event here.
+    }
+  };
+
+  frame.onerror=function(){
+    stopProgress();
+    showBlocked(url);
+  };
+}
+
+function showBlocked(url){
+  const frame=document.getElementById('browser-frame');
+  const blockedMsg=document.getElementById('blocked-msg');
+  // Check if the frame is actually blank
+  try{
+    const doc=frame.contentDocument||frame.contentWindow.document;
+    if(doc&&doc.body&&doc.body.innerHTML.trim()!==''){
+      return; // Not blank, fine
+    }
+  }catch(e){return;} // Cross-origin = content loaded fine
+  frame.style.display='none';
+  document.getElementById('blocked-desc').textContent=
+    `${hostname(url)} blocks being embedded for security reasons. You can open it in a real browser tab instead.`;
+  blockedMsg.classList.add('show');
+}
+
+function startProgress(){
+  const bar=document.getElementById('browser-progress');
+  clearTimeout(loadTimer);
+  bar.style.transition='none';
+  bar.style.width='0%';
+  bar.style.opacity='1';
+  setTimeout(()=>{
+    bar.style.transition='width 2s ease';
+    bar.style.width='80%';
+  },20);
+}
+
+function stopProgress(){
+  const bar=document.getElementById('browser-progress');
+  bar.style.transition='width .2s ease, opacity .4s .2s';
+  bar.style.width='100%';
+  loadTimer=setTimeout(()=>{bar.style.opacity='0';},600);
+}
+
+function updateNavBtns(){
+  document.getElementById('btn-back').disabled=frameIndex<=0;
+  document.getElementById('btn-fwd').disabled=frameIndex>=frameHistory.length-1;
+}
+
+function frameBack(){
+  if(frameIndex>0){
+    frameIndex--;
+    loadInBrowser(frameHistory[frameIndex],'',false);
+  }
+}
+function frameForward(){
+  if(frameIndex<frameHistory.length-1){
+    frameIndex++;
+    loadInBrowser(frameHistory[frameIndex],'',false);
+  }
+}
+function frameReload(){
+  if(currentUrl)loadInBrowser(currentUrl,'',false);
+}
+
+function navigateTo(val){
+  if(!val)return;
+  let url;
+  const engine=document.getElementById('engine-sel').value;
+  if(/^https?:\/\//i.test(val))url=val;
+  else if(/^[a-z0-9-]+(\.[a-z]{2,})(\/|$)/i.test(val))url='https://'+val;
+  else url=engine+encodeURIComponent(val);
+  trackVisit(url,val);
+  loadInBrowser(url,val,true);
+}
+
+function openInRealTab(){
+  window.open(currentUrl,'_blank');
+}
+
+function closeBrowser(){
+  const overlay=document.getElementById('browser-overlay');
+  const frame=document.getElementById('browser-frame');
+  overlay.classList.remove('open');
+  frame.src='about:blank';
+  document.title='ZXYweb — Start Page';
+}
+
+// URL bar enter key
+document.getElementById('browser-url-input').addEventListener('keydown',function(e){
+  if(e.key==='Enter')navigateTo(this.value);
+});
+
+/* ── SEARCH ── */
 function doSearch(){
   const v=document.getElementById('search-input').value.trim();
   if(!v)return;
@@ -459,7 +752,7 @@ function doSearch(){
   else if(/^[a-z0-9-]+(\.[a-z]{2,})(\/|$)/i.test(v))url='https://'+v;
   else url=engine+encodeURIComponent(v);
   trackVisit(url,v);
-  window.open(url,'_blank');
+  loadInBrowser(url,v,true);
 }
 
 document.getElementById('search-input').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch()});
@@ -468,6 +761,14 @@ function saveEngine(){save('tb_engine',document.getElementById('engine-sel').val
 function loadEngine(){
   const e=load('tb_engine',null);
   if(e)document.getElementById('engine-sel').value=e;
+}
+
+function trackVisit(url,title){
+  recents=recents.filter(r=>r.url!==url);
+  recents.unshift({url,title,ts:Date.now()});
+  if(recents.length>20)recents=recents.slice(0,20);
+  save('tb_recents',recents);
+  renderRecents();
 }
 
 function delBookmark(e,i){e.preventDefault();e.stopPropagation();bookmarks.splice(i,1);save('tb_bk',bookmarks);renderBookmarks()}
@@ -503,12 +804,12 @@ function toggleSidebar(){document.getElementById('sidebar').classList.toggle('op
 function toggleRecents(v){showRecents=v;save('tb_showRecents',v);renderRecents()}
 function save24h(v){use24h=v;save('tb_24h',v);updateClock()}
 function clearRecents(){recents=[];save('tb_recents',[]);renderRecents()}
-function clearAll(){if(confirm('Reset all TabBrowser data?')){localStorage.clear();location.reload()}}
+function clearAll(){if(confirm('Reset all ZXYweb data?')){localStorage.clear();location.reload()}}
 function exportData(){
   const data=JSON.stringify({quickLinks,bookmarks},null,2);
   const a=document.createElement('a');
   a.href='data:text/json,'+encodeURIComponent(data);
-  a.download='tabbrowser-data.json';a.click();
+  a.download='zxyweb-data.json';a.click();
 }
 
 function updateClock(){
@@ -520,6 +821,14 @@ function updateClock(){
 }
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+
+// Keyboard shortcut: Escape closes browser overlay
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    const overlay=document.getElementById('browser-overlay');
+    if(overlay.classList.contains('open'))closeBrowser();
+  }
+});
 
 function init(){
   loadEngine();
