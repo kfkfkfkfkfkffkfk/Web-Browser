@@ -66,9 +66,9 @@ body.has-bg .glow{opacity:.28}
   position:fixed;top:16px;right:20px;z-index:300;
   display:flex;align-items:center;gap:8px;
 }
-.tr-time{font-size:12px;color:var(--muted);font-family:var(--mono);font-variant-numeric:tabular-nums}
+.tr-time{display:none}
 .tr-gear{
-  width:36px;height:36px;border-radius:50%;
+  width:52px;height:52px;border-radius:50%;
   background:var(--card);border:1px solid var(--border-hover);color:var(--muted);
   display:flex;align-items:center;justify-content:center;cursor:pointer;
   transition:color .15s,border-color .2s,transform .35s;box-shadow:var(--shadow);
@@ -78,50 +78,92 @@ body.has-bg .glow{opacity:.28}
 main{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;padding:0 20px 80px}
 
 /* ═══════════════════════════════════════
-   LOGO  —  custom SVG wordmark
-   A hexagonal emblem + typographic lockup
+   LOGO — pen-and-ink style
+   organic white halo extends right, fades out
 ═══════════════════════════════════════ */
 .logo-fixed{
   position:sticky;top:18px;z-index:200;align-self:flex-start;
   pointer-events:none;width:100%;max-width:900px;
   padding:6px 0 0;
+  /* NO background — let grid/glow show through */
+  background:transparent;
 }
 .logo{
-  display:inline-flex;align-items:center;gap:10px;
+  display:inline-flex;align-items:center;gap:12px;
   pointer-events:all;user-select:none;
   position:relative;
 }
-/* Hexagon emblem */
-.logo-hex{
-  position:relative;width:34px;height:34px;flex-shrink:0;
+
+/* White halo: solid behind the logo content, then fades/dissolves to the right */
+.logo-halo{
+  position:absolute;
+  /* top/bottom/left tight around logo; right extends way out */
+  top:-12px;
+  left:-14px;
+  bottom:-16px;
+  right:-220px; /* extend far right */
+  background:
+    linear-gradient(
+      to right,
+      rgba(255,255,255,0.96) 0px,
+      rgba(255,255,255,0.95) 120px,
+      rgba(255,255,255,0.7)  200px,
+      rgba(255,255,255,0.3)  280px,
+      transparent            360px
+    );
+  /* NES-label organic top/bottom shape — flat top, V-ish bottom */
+  clip-path: polygon(
+    0% 8%,
+    1% 2%,
+    4% 0%,
+    96% 0%,
+    100% 0%,
+    100% 100%,
+    96% 100%,
+    4% 100%,
+    1% 98%,
+    0% 92%
+  );
+  z-index:-1;
+  pointer-events:none;
+  filter: drop-shadow(0 2px 10px rgba(0,0,0,0.15));
 }
-.logo-hex svg{display:block}
-/* Wordmark */
-.logo-word{display:flex;flex-direction:column;gap:0;line-height:1}
+/* Theme-invariant */
+[data-theme="light"] .logo-halo,
+[data-incognito="true"] .logo-halo,
+[data-theme="dark"] .logo-halo{
+  background:
+    linear-gradient(
+      to right,
+      rgba(255,255,255,0.97) 0px,
+      rgba(255,255,255,0.95) 120px,
+      rgba(255,255,255,0.68) 200px,
+      rgba(255,255,255,0.28) 280px,
+      transparent            360px
+    );
+}
+
+/* Pen-and-ink emblem SVG */
+.logo-ink{
+  flex-shrink:0;
+  width:44px;height:44px;
+  /* always same tones — dark ink lines */
+}
+/* Wordmark — always dark ink on white halo, regardless of theme */
+.logo-word{display:flex;flex-direction:column;gap:1px;line-height:1}
 .logo-zxy{
-  font-family:var(--mono);font-size:19px;font-weight:500;letter-spacing:.18em;
-  background:linear-gradient(110deg,#c4b5fd 0%,#818cf8 38%,#34d399 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  filter:drop-shadow(0 0 8px rgba(124,109,255,.5));
-  animation:logo-pulse 5s ease-in-out infinite;
-}
-[data-incognito="true"] .logo-zxy{
-  background:linear-gradient(110deg,#666 0%,#888 50%,#555 100%);
-  -webkit-background-clip:text;background-clip:text;
-  filter:none;
+  font-family:var(--mono);font-size:20px;font-weight:700;letter-spacing:.12em;
+  color:#1a1a2e !important;
+  -webkit-text-fill-color:#1a1a2e !important;
+  text-shadow: 0.5px 0.5px 0 #4a3a8a44;
+  filter:none !important;
+  animation:none !important;
 }
 .logo-sub{
-  font-family:var(--mono);font-size:7.5px;letter-spacing:.45em;
-  color:var(--accent2);opacity:.7;margin-top:1px;padding-left:1px;
+  font-family:var(--mono);font-size:7px;letter-spacing:.5em;
+  color:#5a4a8a !important;
+  opacity:0.8;margin-top:1px;padding-left:1px;
 }
-[data-incognito="true"] .logo-sub{color:#555;opacity:.6}
-@keyframes logo-pulse{
-  0%,100%{filter:drop-shadow(0 0 8px rgba(124,109,255,.5))}
-  50%{filter:drop-shadow(0 0 14px rgba(0,229,184,.55))}
-}
-/* hex ring rotation */
-@keyframes hex-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-@keyframes hex-counter{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
 
 .clock-section{text-align:center;padding:clamp(58px,9vh,96px) 0 42px;width:100%}
 .clock{font-size:clamp(56px,9.5vw,96px);font-weight:300;letter-spacing:-4px;line-height:1;color:var(--text)}
@@ -155,10 +197,64 @@ main{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align
 .engine-opt img{width:14px;height:14px;border-radius:3px}
 .engine-toggle{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:100px;background:var(--card);border:1px solid var(--border);cursor:pointer;font-size:12px;color:var(--muted);min-height:36px;white-space:nowrap;transition:border-color .15s,color .15s;flex-shrink:0}
 .engine-toggle:hover{border-color:var(--border-hover);color:var(--text)}
-.incognito-pill{display:none;align-items:center;gap:7px;padding:7px 14px;border-radius:100px;background:var(--card);border:1px solid var(--border-hover);font-size:12.5px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s;user-select:none;min-height:36px}
-.incognito-pill.visible{display:flex}
-.incognito-pill.active{border-color:#444;background:#161616;color:#999}
-[data-theme="light"] .incognito-pill.active{background:#ddd;border-color:#888;color:#444}
+
+/* INCOGNITO SWITCH (replaces pill button) */
+.incognito-switch-wrap{
+  display:none;align-items:center;gap:8px;padding:6px 12px 6px 10px;
+  border-radius:100px;background:var(--card);border:1px solid var(--border-hover);
+  font-size:12px;color:var(--muted);cursor:pointer;transition:all .2s;user-select:none;
+  min-height:36px;
+}
+.incognito-switch-wrap.visible{display:flex}
+.incognito-switch-wrap.active{border-color:#555;background:#161616;color:#aaa}
+[data-theme="light"] .incognito-switch-wrap.active{background:#ddd;border-color:#888;color:#444}
+.incognito-sw-label{font-size:11.5px;font-weight:500;white-space:nowrap}
+/* toggle knob */
+.inc-tog{position:relative;width:34px;height:19px;flex-shrink:0}
+.inc-tog input{opacity:0;width:0;height:0;position:absolute}
+.inc-tog-sl{position:absolute;inset:0;background:#2a2a3a;border-radius:10px;cursor:pointer;transition:background .2s}
+.inc-tog-sl::before{content:'';position:absolute;width:13px;height:13px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .2s}
+.inc-tog input:checked+.inc-tog-sl{background:var(--accent)}
+.inc-tog input:checked+.inc-tog-sl::before{transform:translateX(15px)}
+[data-theme="light"] .inc-tog-sl{background:#d0cce8}
+
+/* VOLUME PILL */
+.vol-pill{
+  display:none;align-items:center;gap:8px;padding:6px 14px 6px 12px;
+  border-radius:100px;background:var(--card);border:1px solid var(--border-hover);
+  font-size:12px;color:var(--muted);min-height:36px;transition:border-color .2s;
+}
+.vol-pill.visible{display:flex}
+.vol-pill:hover{border-color:var(--border-hover)}
+.vol-mute-btn{
+  display:flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border-radius:50%;background:transparent;
+  color:var(--muted);cursor:pointer;transition:color .15s,background .15s;flex-shrink:0;
+  padding:0;
+}
+.vol-mute-btn:hover{color:var(--text);background:var(--bg3)}
+.vol-mute-btn.muted{color:var(--danger)}
+.vol-divider{width:1px;height:16px;background:var(--border-hover);flex-shrink:0}
+.vol-slider{
+  -webkit-appearance:none;appearance:none;
+  width:72px;height:3px;border-radius:2px;
+  background:linear-gradient(to right, var(--accent) 0%, var(--accent) var(--vol-pct,70%), var(--border-hover) var(--vol-pct,70%), var(--border-hover) 100%);
+  outline:none;cursor:pointer;border:none;
+}
+.vol-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:13px;height:13px;border-radius:50%;
+  background:var(--text);cursor:pointer;
+  box-shadow:0 1px 4px rgba(0,0,0,.4);
+  transition:transform .1s;
+}
+.vol-slider::-webkit-slider-thumb:hover{transform:scale(1.2)}
+.vol-slider::-moz-range-thumb{
+  width:13px;height:13px;border-radius:50%;border:none;
+  background:var(--text);cursor:pointer;
+  box-shadow:0 1px 4px rgba(0,0,0,.4);
+}
+.vol-label{font-size:10.5px;color:var(--muted);font-family:var(--mono);min-width:24px;text-align:right}
 
 .sections{width:100%;max-width:860px;display:flex;flex-direction:column;gap:36px}
 .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
@@ -239,6 +335,7 @@ main{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align
 footer{position:relative;z-index:1;text-align:center;padding:20px;font-size:11.5px;color:var(--muted);border-top:1px solid var(--border)}
 footer a{color:var(--muted);transition:color .15s}
 footer a:hover{color:var(--accent)}
+.footer-version{color:var(--muted);opacity:.55;font-family:var(--mono);font-size:10.5px}
 
 /* SIDEBAR */
 .sidebar{position:fixed;right:0;top:0;bottom:0;width:300px;z-index:500;background:var(--bg2);border-left:1px solid var(--border-hover);transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;padding:24px;gap:20px;overflow-y:auto;-webkit-overflow-scrolling:touch}
@@ -306,6 +403,7 @@ footer a:hover{color:var(--accent)}
   .clock{font-size:50px;letter-spacing:-3px}
   .sidebar{width:100%}
   .top-right{right:12px}
+  .vol-slider{width:52px}
 }
 </style>
 </head>
@@ -319,11 +417,11 @@ footer a:hover{color:var(--accent)}
   Incognito — searches open in new tab
 </div>
 
-<!-- Top-right: time + gear -->
+<!-- Top-right: time + gear (NO date) -->
 <div class="top-right">
   <div class="tr-time" id="header-time"></div>
   <button class="tr-gear" onclick="toggleSidebar()" title="Settings">
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="3"/>
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
     </svg>
@@ -331,37 +429,41 @@ footer a:hover{color:var(--accent)}
 </div>
 
 <main>
-  <!-- STICKY LOGO -->
+  <!-- STICKY LOGO — pen-and-ink style with NES-label organic halo -->
   <div class="logo-fixed">
     <div class="logo">
-      <!-- SVG hexagon emblem -->
-      <div class="logo-hex">
-        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Organic white halo behind logo (NES-label shape) -->
+      <div class="logo-halo"></div>
+
+      <!-- Pen-and-ink SVG emblem -->
+      <div class="logo-ink">
+        <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <linearGradient id="hg1" x1="0" y1="0" x2="34" y2="34" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#c4b5fd"/>
-              <stop offset="50%" stop-color="#818cf8"/>
-              <stop offset="100%" stop-color="#34d399"/>
-            </linearGradient>
-            <linearGradient id="hg2" x1="34" y1="0" x2="0" y2="34" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#34d399" stop-opacity=".25"/>
-              <stop offset="100%" stop-color="#818cf8" stop-opacity=".05"/>
-            </linearGradient>
-            <filter id="hglow"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="ink-rough">
+              <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/>
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="0.6" xChannelSelector="R" yChannelSelector="G"/>
+            </filter>
           </defs>
-          <!-- outer hex ring, slowly rotating -->
-          <g style="transform-origin:17px 17px;animation:hex-spin 18s linear infinite">
-            <polygon points="17,2 30,9.5 30,24.5 17,32 4,24.5 4,9.5" fill="none" stroke="url(#hg1)" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
-          </g>
-          <!-- inner hex fill -->
-          <polygon points="17,6 28,12.5 28,21.5 17,28 6,21.5 6,12.5" fill="url(#hg2)" stroke="url(#hg1)" stroke-width="1.2" filter="url(#hglow)"/>
-          <!-- Z letterform inside hex -->
-          <g style="transform-origin:17px 17px;animation:hex-counter 18s linear infinite">
-            <text x="17" y="21.5" text-anchor="middle" font-family="DM Mono,monospace" font-size="11" font-weight="500" fill="url(#hg1)">Z</text>
-          </g>
+          <!-- Hand-drawn style globe/web emblem -->
+          <!-- outer rough circle -->
+          <circle cx="22" cy="22" r="18" stroke="#1a1a2e" stroke-width="1.8" fill="none" filter="url(#ink-rough)" stroke-dasharray="1 0.2" stroke-linecap="round"/>
+          <!-- latitude lines (hand-drawn feel) -->
+          <ellipse cx="22" cy="22" rx="18" ry="8" stroke="#1a1a2e" stroke-width="1.1" fill="none" filter="url(#ink-rough)" opacity="0.7"/>
+          <ellipse cx="22" cy="22" rx="18" ry="14" stroke="#1a1a2e" stroke-width="0.9" fill="none" filter="url(#ink-rough)" opacity="0.5"/>
+          <!-- vertical meridian -->
+          <line x1="22" y1="4" x2="22" y2="40" stroke="#1a1a2e" stroke-width="1.1" filter="url(#ink-rough)" stroke-linecap="round"/>
+          <!-- horizontal axis -->
+          <line x1="4" y1="22" x2="40" y2="22" stroke="#1a1a2e" stroke-width="1.1" filter="url(#ink-rough)" stroke-linecap="round"/>
+          <!-- Z letterform — bold ink, center of globe -->
+          <text x="22" y="27" text-anchor="middle" font-family="DM Mono,monospace" font-size="13" font-weight="700" fill="#1a1a2e" filter="url(#ink-rough)" letter-spacing="0">Z</text>
+          <!-- ink cross-hatch accent lines top-right of globe for depth -->
+          <line x1="30" y1="8" x2="36" y2="14" stroke="#1a1a2e" stroke-width="0.6" opacity="0.35" stroke-linecap="round"/>
+          <line x1="33" y1="8" x2="38" y2="13" stroke="#1a1a2e" stroke-width="0.5" opacity="0.25" stroke-linecap="round"/>
+          <line x1="28" y1="9" x2="33" y2="14" stroke="#1a1a2e" stroke-width="0.5" opacity="0.25" stroke-linecap="round"/>
         </svg>
       </div>
-      <!-- wordmark -->
+
+      <!-- wordmark — always dark ink on the halo -->
       <div class="logo-word">
         <span class="logo-zxy">ZXYweb</span>
         <span class="logo-sub">STARTPAGE</span>
@@ -389,9 +491,31 @@ footer a:hover{color:var(--accent)}
         <span id="engine-toggle-label">Google</span>
         <span style="font-size:10px;opacity:.45">▾</span>
       </button>
-      <div class="incognito-pill" id="incognito-pill" onclick="toggleIncognito()">
+
+      <!-- INCOGNITO SWITCH (replaces old pill/button) -->
+      <div class="incognito-switch-wrap" id="incognito-switch-wrap" onclick="toggleIncognito()">
         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-        Incognito
+        <span class="incognito-sw-label">Incognito</span>
+        <label class="inc-tog" onclick="event.stopPropagation()">
+          <input type="checkbox" id="incognito-checkbox" onchange="toggleIncognito()">
+          <span class="inc-tog-sl"></span>
+        </label>
+      </div>
+
+      <!-- VOLUME PILL -->
+      <div class="vol-pill" id="vol-pill">
+        <!-- mute icon button -->
+        <button class="vol-mute-btn" id="vol-mute-btn" onclick="toggleMute()" title="Mute / Unmute">
+          <svg id="vol-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          </svg>
+        </button>
+        <div class="vol-divider"></div>
+        <input type="range" class="vol-slider" id="vol-slider" min="0" max="100" value="70"
+          oninput="setVolume(this.value)" style="--vol-pct:70%">
+        <span class="vol-label" id="vol-label">70</span>
       </div>
     </div>
     <div class="engine-wrap" id="engine-wrap"></div>
@@ -428,6 +552,7 @@ footer a:hover{color:var(--accent)}
   <a href="https://support.mozilla.org/en-US/kb/how-to-set-the-home-page" target="_blank">Firefox</a> &middot;
   <a href="https://support.apple.com/guide/safari/set-your-homepage-ibrw1020/mac" target="_blank">Safari</a> &middot;
   <a href="https://support.microsoft.com/en-us/microsoft-edge/change-your-browser-home-page-a531b1f5-3b13-4049-d883-de6e7f5cf408" target="_blank">Edge</a>
+  &middot; <span class="footer-version" id="footer-version"></span>
 </footer>
 
 <!-- Music player bar -->
@@ -554,22 +679,23 @@ footer a:hover{color:var(--accent)}
 
 <script>
 // ═══════════════════════════════════════
-// ZXYWEB v2.1
+// ZXYWEB v2.2
 // ═══════════════════════════════════════
-const CURRENT_VERSION = "2.1";
+const CURRENT_VERSION = "2.2";
 const CHANGELOG = [
-  {title:"Saved Background",description:"Your background photo or video now persists across sessions using IndexedDB, so it survives even if localStorage is full."},
+  {title:"Pen-and-Ink Logo",description:"The logo is now a hand-drawn pen-and-ink globe emblem with a vintage white halo label shape — consistent across all themes and modes."},
+  {title:"Incognito Switch",description:"Incognito is now a proper toggle switch instead of a button, making it quicker and clearer to flip on or off."},
+  {title:"Volume Pill",description:"A new volume pill sits next to Incognito when music is loaded. Mute/unmute with one tap and drag the slider to set volume precisely."},
+  {title:"Saved Background",description:"Your background photo or video now persists across sessions using IndexedDB."},
   {title:"Music Auto-plays on Open",description:"Your last track starts playing automatically when you open the tab. If your browser blocks autoplay, a one-tap unlock prompt appears."},
-  {title:"Pause & Resume",description:"Pausing music now saves your position. Pressing play resumes from exactly where you left off instead of restarting."},
-  {title:"New Logo",description:"Redesigned logo featuring a rotating hex emblem with a Z inside, a gradient wordmark, and a glowing pulse animation."},
-  {title:"Settings Gear in Top-Right",description:"The gear icon now lives in the top-right corner next to the date, freeing up the bottom-right corner."}
+  {title:"Pause & Resume",description:"Pausing music now saves your position. Pressing play resumes from exactly where you left off."}
 ];
 
 // ── STORAGE (JSON) ──
 function load(k,def){try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):def}catch{return def}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
 
-// ── INDEXEDDB for large binary blobs (background + audio) ──
+// ── INDEXEDDB ──
 const IDB_NAME='zxyweb_db', IDB_STORE='blobs', IDB_VER=1;
 let _idb=null;
 function openIDB(){
@@ -581,30 +707,9 @@ function openIDB(){
     req.onerror=e=>rej(e)
   })
 }
-async function idbSet(key,val){
-  const db=await openIDB();
-  return new Promise((res,rej)=>{
-    const tx=db.transaction(IDB_STORE,'readwrite');
-    tx.objectStore(IDB_STORE).put(val,key);
-    tx.oncomplete=()=>res();tx.onerror=e=>rej(e);
-  })
-}
-async function idbGet(key){
-  const db=await openIDB();
-  return new Promise((res,rej)=>{
-    const tx=db.transaction(IDB_STORE,'readonly');
-    const req=tx.objectStore(IDB_STORE).get(key);
-    req.onsuccess=()=>res(req.result??null);req.onerror=e=>rej(e);
-  })
-}
-async function idbDel(key){
-  const db=await openIDB();
-  return new Promise((res,rej)=>{
-    const tx=db.transaction(IDB_STORE,'readwrite');
-    tx.objectStore(IDB_STORE).delete(key);
-    tx.oncomplete=()=>res();tx.onerror=e=>rej(e);
-  })
-}
+async function idbSet(key,val){const db=await openIDB();return new Promise((res,rej)=>{const tx=db.transaction(IDB_STORE,'readwrite');tx.objectStore(IDB_STORE).put(val,key);tx.oncomplete=()=>res();tx.onerror=e=>rej(e)})}
+async function idbGet(key){const db=await openIDB();return new Promise((res,rej)=>{const tx=db.transaction(IDB_STORE,'readonly');const req=tx.objectStore(IDB_STORE).get(key);req.onsuccess=()=>res(req.result??null);req.onerror=e=>rej(e)})}
+async function idbDel(key){const db=await openIDB();return new Promise((res,rej)=>{const tx=db.transaction(IDB_STORE,'readwrite');tx.objectStore(IDB_STORE).delete(key);tx.oncomplete=()=>res();tx.onerror=e=>rej(e)})}
 
 // ── ENGINES ──
 const ENGINES=[
@@ -636,18 +741,18 @@ let incognito   = false;
 let engineBarOpen = false;
 
 // MUSIC STATE
-let musicPresets = [];  // [{name, type:'file'|'youtube', ytId?, idbKey?}]
+let musicPresets = [];
 let currentTrackIdx = -1;
 let musicPlaying = false;
-let audioEl = null;       // HTMLAudioElement for file tracks
-let audioPosition = 0;    // saved position for pause/resume
+let audioEl = null;
+let audioPosition = 0;
 let ytIframe = null;
-let pendingAutoplay = false; // need user gesture to unlock?
+let pendingAutoplay = false;
+let masterVolume = load('zxy_volume', 70);
+let masterMuted = load('zxy_muted', false);
 
 // ── FAVICON ──
-function favUrl(url){
-  try{return'https://www.google.com/s2/favicons?sz=32&domain='+encodeURIComponent(new URL(normalizeUrl(url)).hostname)}catch{return''}
-}
+function favUrl(url){try{return'https://www.google.com/s2/favicons?sz=32&domain='+encodeURIComponent(new URL(normalizeUrl(url)).hostname)}catch{return''}}
 
 // ── URL NORMALIZE ──
 function normalizeUrl(raw){
@@ -676,24 +781,31 @@ function selectEngine(id){
   const eng=ENGINES.find(e=>e.id===id)||ENGINES[0];
   document.getElementById('engine-toggle-label').textContent=eng.label;
   renderEngineBar();
-  const pill=document.getElementById('incognito-pill');
-  if(eng.incognito){pill.classList.add('visible')}
-  else{pill.classList.remove('visible');if(incognito)setIncognito(false)}
+  const sw=document.getElementById('incognito-switch-wrap');
+  if(eng.incognito){sw.classList.add('visible')}
+  else{sw.classList.remove('visible');if(incognito)setIncognito(false)}
   engineBarOpen=false;
   document.getElementById('engine-wrap').classList.remove('visible');
 }
 function initEngineBar(){
   const eng=ENGINES.find(e=>e.id===engineId)||ENGINES[0];
   document.getElementById('engine-toggle-label').textContent=eng.label;
-  if(eng.incognito)document.getElementById('incognito-pill').classList.add('visible');
+  if(eng.incognito)document.getElementById('incognito-switch-wrap').classList.add('visible');
 }
 
 // ── INCOGNITO ──
-function toggleIncognito(){setIncognito(!incognito)}
+function toggleIncognito(){
+  // Sync checkbox state
+  const cb = document.getElementById('incognito-checkbox');
+  setIncognito(cb.checked);
+}
 function setIncognito(v){
   incognito=v;
   document.documentElement.setAttribute('data-incognito',v?'true':'false');
-  document.getElementById('incognito-pill').classList.toggle('active',v);
+  const sw = document.getElementById('incognito-switch-wrap');
+  sw.classList.toggle('active',v);
+  const cb = document.getElementById('incognito-checkbox');
+  cb.checked = v;
   document.getElementById('incognito-badge').classList.toggle('visible',v);
   document.querySelector('main').style.paddingTop=v?'34px':'';
 }
@@ -794,7 +906,7 @@ function applyTheme(){
   document.getElementById('tog-light').checked=lightMode;
 }
 
-// ── BACKGROUND (IndexedDB) ──
+// ── BACKGROUND ──
 async function handleBgFile(input){
   const file=input.files[0];if(!file)return;
   const isVideo=file.type.startsWith('video/');
@@ -838,8 +950,55 @@ async function loadBg(){
   if(stored.isVideo)applyBgVideo(url);else applyBgPhoto(url);
 }
 
+// ── VOLUME / MUTE ──
+function applyVolumeToAudio(){
+  const vol = masterMuted ? 0 : masterVolume / 100;
+  if(audioEl) audioEl.volume = vol;
+  // YouTube doesn't support volume via postMessage easily, so we just track state
+}
+function setVolume(val){
+  masterVolume = parseInt(val);
+  save('zxy_volume', masterVolume);
+  masterMuted = false;
+  save('zxy_muted', false);
+  // Update slider gradient
+  const slider = document.getElementById('vol-slider');
+  slider.style.setProperty('--vol-pct', masterVolume + '%');
+  document.getElementById('vol-label').textContent = masterVolume;
+  document.getElementById('vol-mute-btn').classList.remove('muted');
+  updateVolIcon();
+  applyVolumeToAudio();
+}
+function toggleMute(){
+  masterMuted = !masterMuted;
+  save('zxy_muted', masterMuted);
+  document.getElementById('vol-mute-btn').classList.toggle('muted', masterMuted);
+  updateVolIcon();
+  applyVolumeToAudio();
+}
+function updateVolIcon(){
+  const icon = document.getElementById('vol-icon');
+  if(masterMuted || masterVolume === 0){
+    icon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>`;
+  } else if(masterVolume < 40){
+    icon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>`;
+  } else {
+    icon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>`;
+  }
+}
+function initVolumePill(){
+  const slider = document.getElementById('vol-slider');
+  slider.value = masterVolume;
+  slider.style.setProperty('--vol-pct', masterVolume + '%');
+  document.getElementById('vol-label').textContent = masterVolume;
+  if(masterMuted) document.getElementById('vol-mute-btn').classList.add('muted');
+  updateVolIcon();
+}
+function showVolPill(){
+  document.getElementById('vol-pill').classList.add('visible');
+}
+
 // ── MUSIC ──
-// Presets stored in localStorage (metadata only); binary in IDB keyed zxy_audio_N
 function saveMusicMeta(){save('zxy_music_meta',musicPresets.map(p=>({name:p.name,type:p.type,ytId:p.ytId||null,idbKey:p.idbKey||null})))}
 function loadMusicMeta(){
   const meta=load('zxy_music_meta',[]);
@@ -860,6 +1019,7 @@ async function addMusicFile(input){
   renderMusicPresets();
   input.value='';
   if(currentTrackIdx<0)playTrack(musicPresets.length-1);
+  showVolPill();
 }
 
 function addYouTubeTrack(){
@@ -873,13 +1033,12 @@ function addYouTubeTrack(){
   renderMusicPresets();
   document.getElementById('yt-url-input').value='';
   if(currentTrackIdx<0)playTrack(musicPresets.length-1);
+  showVolPill();
 }
 
 async function playTrack(i){
   if(i<0||i>=musicPresets.length)return;
-  // pause existing without destroying position
   _pauseCurrentAudio();
-  // if same track, resume from position
   const isSame=(i===currentTrackIdx);
   currentTrackIdx=i;
   audioPosition=isSame?audioPosition:0;
@@ -893,18 +1052,12 @@ async function playTrack(i){
     const url=URL.createObjectURL(blob);
     audioEl=new Audio(url);
     audioEl.loop=true;
+    audioEl.volume = masterMuted ? 0 : masterVolume / 100;
     audioEl.currentTime=audioPosition;
-    audioEl.addEventListener('timeupdate',()=>{
-      audioPosition=audioEl.currentTime;
-      save('zxy_track_pos',audioPosition);
-    });
+    audioEl.addEventListener('timeupdate',()=>{audioPosition=audioEl.currentTime;save('zxy_track_pos',audioPosition)});
     const played=audioEl.play();
     if(played&&played.catch){
-      played.catch(()=>{
-        // blocked by browser — show unlock overlay
-        pendingAutoplay=true;
-        document.getElementById('unlock-overlay').classList.add('show');
-      });
+      played.catch(()=>{pendingAutoplay=true;document.getElementById('unlock-overlay').classList.add('show')});
     }
     musicPlaying=true;
     updateMusicBar(p.name);
@@ -917,48 +1070,28 @@ async function playTrack(i){
     document.body.appendChild(ytIframe);
     musicPlaying=true;
     updateMusicBar(p.name);
-    // track YT position roughly
     clearInterval(window._ytTimer);
     window._ytTimer=setInterval(()=>{if(musicPlaying){audioPosition+=1;save('zxy_track_pos',audioPosition)}},1000);
   }
+  showVolPill();
   renderMusicPresets();
 }
 
 function _pauseCurrentAudio(){
   if(audioEl){audioPosition=audioEl.currentTime;audioEl.pause();}
-  if(ytIframe){
-    try{ytIframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}','*')}catch{}
-    clearInterval(window._ytTimer);
-  }
+  if(ytIframe){try{ytIframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}','*')}catch{}clearInterval(window._ytTimer)}
 }
 
 function toggleMusicPlay(){
   if(musicPlaying){
-    // PAUSE — save position
     if(audioEl){audioPosition=audioEl.currentTime;save('zxy_track_pos',audioPosition);audioEl.pause();}
-    else if(ytIframe){
-      try{ytIframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}','*')}catch{}
-      clearInterval(window._ytTimer);
-    }
+    else if(ytIframe){try{ytIframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}','*')}catch{}clearInterval(window._ytTimer)}
     musicPlaying=false;
     updateMusicBarState();
   } else {
-    // RESUME from saved position
-    if(audioEl){
-      audioEl.currentTime=audioPosition;
-      audioEl.play().catch(()=>{});
-      musicPlaying=true;
-      updateMusicBarState();
-    } else if(ytIframe){
-      try{ytIframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}','*')}catch{}
-      musicPlaying=true;
-      // restart position tracking
-      clearInterval(window._ytTimer);
-      window._ytTimer=setInterval(()=>{if(musicPlaying){audioPosition+=1;save('zxy_track_pos',audioPosition)}},1000);
-      updateMusicBarState();
-    } else if(currentTrackIdx>=0){
-      playTrack(currentTrackIdx);
-    }
+    if(audioEl){audioEl.currentTime=audioPosition;audioEl.play().catch(()=>{});musicPlaying=true;updateMusicBarState();}
+    else if(ytIframe){try{ytIframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}','*')}catch{}musicPlaying=true;clearInterval(window._ytTimer);window._ytTimer=setInterval(()=>{if(musicPlaying){audioPosition+=1;save('zxy_track_pos',audioPosition)}},1000);updateMusicBarState();}
+    else if(currentTrackIdx>=0){playTrack(currentTrackIdx)}
   }
 }
 
@@ -995,7 +1128,7 @@ async function deleteTrack(e,i){
   else if(currentTrackIdx>i)currentTrackIdx--;
   saveMusicMeta();save('zxy_track',currentTrackIdx);save('zxy_track_pos',audioPosition);
   renderMusicPresets();
-  if(!musicPresets.length)document.getElementById('music-bar').classList.remove('visible');
+  if(!musicPresets.length){document.getElementById('music-bar').classList.remove('visible');document.getElementById('vol-pill').classList.remove('visible');}
 }
 
 function renderMusicPresets(){
@@ -1021,7 +1154,8 @@ function updateClock(){
   const now=new Date();
   document.getElementById('clock').textContent=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:!use24h});
   document.getElementById('clock-date').textContent=now.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  document.getElementById('header-time').textContent=now.toLocaleDateString([],{month:'short',day:'numeric'});
+  // Top-right shows TIME only (no date)
+  document.getElementById('header-time').textContent=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:!use24h});
 }
 
 // ── ESCAPE ──
@@ -1080,6 +1214,9 @@ async function pollGitHub(){
 
 // ── INIT ──
 async function init(){
+  // Footer version
+  document.getElementById('footer-version').textContent = 'v' + CURRENT_VERSION;
+
   applyTheme();
   document.getElementById('tog-recents').checked=showRecents;
   document.getElementById('tog-24h').checked=use24h;
@@ -1089,6 +1226,7 @@ async function init(){
   updateClock();
   setInterval(updateClock,5000);
   initEngineBar();
+  initVolumePill();
   loadMusicMeta();
   renderMusicPresets();
   checkForUpdates();
@@ -1096,16 +1234,15 @@ async function init(){
   setInterval(pollGitHub,600000);
   document.getElementById('search-input').focus();
 
-  // Load saved background (async)
+  // Show vol pill if tracks exist
+  if(musicPresets.length > 0) showVolPill();
+
   await loadBg();
 
-  // Auto-play last track if one exists
   if(currentTrackIdx>=0 && musicPresets[currentTrackIdx]){
     const p=musicPresets[currentTrackIdx];
-    // Show bar immediately so user can see it
     document.getElementById('music-bar').classList.add('visible');
     document.getElementById('music-bar-name').textContent=p.name;
-    // Attempt autoplay
     await playTrack(currentTrackIdx);
   }
 }
