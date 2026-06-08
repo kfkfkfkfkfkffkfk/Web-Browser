@@ -254,9 +254,11 @@ main{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align
 .section-action:hover{opacity:.7}
 
 .quick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px}
-.quick-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 10px 14px;border-radius:var(--r);background:var(--card);border:1px solid var(--border);cursor:pointer;transition:background .15s,border-color .15s,transform .15s;text-align:center;position:relative;box-shadow:var(--shadow);min-height:44px}
+.quick-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 10px 14px;border-radius:var(--r);background:var(--card);border:1px solid var(--border);cursor:pointer;transition:background .15s,border-color .15s,transform .15s;text-align:center;position:relative;box-shadow:var(--shadow);min-height:44px;user-select:none}
 .quick-card:hover{background:var(--card-hover);border-color:var(--border-hover);transform:translateY(-2px)}
 .quick-card:active{transform:translateY(0)}
+.quick-card.dragging{opacity:.4;transform:scale(.95);border-color:var(--accent);z-index:100}
+.quick-card.drag-over{border-color:var(--accent2);background:var(--card-hover);transform:scale(1.04)}
 .quick-favicon{width:28px;height:28px;border-radius:8px;object-fit:cover}
 .quick-label{font-size:11px;color:var(--muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
 .quick-del{position:absolute;top:5px;right:5px;opacity:0;color:var(--muted);font-size:11px;transition:opacity .15s,color .15s;padding:5px;border-radius:4px;line-height:1;background:var(--card);min-width:24px;min-height:24px;display:flex;align-items:center;justify-content:center}
@@ -537,13 +539,6 @@ footer a:hover{opacity:.7}
       </div>
       <div class="quick-grid" id="quick-grid"></div>
     </div>
-    <div>
-      <div class="section-header">
-        <div class="section-title">Bookmarks</div>
-        <div class="section-action" onclick="openAddBookmark()">+ Add</div>
-      </div>
-      <div class="bk-list" id="bk-list"></div>
-    </div>
     <div id="recents-section" style="display:none">
       <div class="section-header">
         <div class="section-title">Recently visited</div>
@@ -583,7 +578,6 @@ footer a:hover{opacity:.7}
       <svg id="repeat-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
     </button>
   </div>
-  <div class="sync-pill" id="sync-pill"><div class="sync-dot"></div><span id="sync-label">lead</span></div>
 </div>
 
 <div id="unlock-overlay" style="display:none;position:fixed;inset:0;z-index:1500;background:rgba(0,0,0,.75);align-items:center;justify-content:center">
@@ -672,19 +666,6 @@ footer a:hover{opacity:.7}
   </div>
 </div>
 
-<!-- ADD BOOKMARK -->
-<div class="modal-overlay" id="modal-bk">
-  <div class="modal">
-    <div class="modal-title">Add bookmark</div>
-    <button class="modal-close" onclick="closeModal('modal-bk')">&#10005;</button>
-    <input class="modal-input" id="bk-title-inp" placeholder="Title"/>
-    <input class="modal-input" id="bk-url-inp" placeholder="URL (e.g. docs.google.com)" autocapitalize="none" autocorrect="off"/>
-    <div class="modal-row">
-      <button class="modal-btn modal-btn-secondary" onclick="closeModal('modal-bk')">Cancel</button>
-      <button class="modal-btn modal-btn-primary" onclick="addBookmark()">Save</button>
-    </div>
-  </div>
-</div>
 
 <!-- UPDATE BANNER -->
 <div class="update-banner" id="update-banner">
@@ -1265,33 +1246,76 @@ function setIncognito(v){
   document.querySelector('main').style.paddingTop=v?'34px':'';
 }
 
-// ── QUICK LINKS ──
+// ── QUICK LINKS (drag-to-reorder, same-tab navigation) ──
 function allQL(){return[...PINNED_LINKS,...quickLinks]}
+
+let dragSrcIdx = -1;
+
 function renderQuick(){
-  document.getElementById('quick-grid').innerHTML=allQL().map((q,i)=>{
-    const pin=i<PINNED_LINKS.length;
-    return`<div class="quick-card" onclick="openUrl('${esc(q.url)}','${esc(q.label)}')">
+  const grid = document.getElementById('quick-grid');
+  const items = allQL();
+  grid.innerHTML = items.map((q,i) => {
+    const pin = i < PINNED_LINKS.length;
+    return `<div class="quick-card" data-idx="${i}"
+      draggable="true"
+      onclick="quickCardClick(event,'${esc(q.url)}','${esc(q.label)}')"
+      ondragstart="qlDragStart(event,${i})"
+      ondragover="qlDragOver(event,${i})"
+      ondragleave="qlDragLeave(event)"
+      ondrop="qlDrop(event,${i})"
+      ondragend="qlDragEnd()">
       <img class="quick-favicon" src="${favUrl(q.url)}" onerror="this.style.display='none'" alt="">
       <div class="quick-label">${esc(q.label)}</div>
       <button class="quick-del${pin?' hidden':''}" onclick="delQuick(event,${i-PINNED_LINKS.length})">✕</button>
     </div>`;
   }).join('');
 }
-function delQuick(e,i){e.stopPropagation();quickLinks.splice(i,1);save('zxy_quick',quickLinks);renderQuick();}
 
-// ── BOOKMARKS ──
-function renderBookmarks(){
-  const el=document.getElementById('bk-list');
-  if(!bookmarks.length){el.innerHTML='<div class="bk-empty">No bookmarks yet.<br>Click <b>+ Add</b> to save your favourite sites.</div>';return;}
-  el.innerHTML=bookmarks.map((b,i)=>`
-    <a class="bk-item" href="${esc(b.url)}" target="_blank" onclick="trackVisit('${esc(b.url)}','${esc(b.title)}')">
-      <img class="bk-favicon" src="${favUrl(b.url)}" onerror="this.style.display='none'" alt="">
-      <div class="bk-title">${esc(b.title)}</div>
-      <div class="bk-url">${esc(b.url)}</div>
-      <button class="bk-del" onclick="delBookmark(event,${i})">&#10005;</button>
-    </a>`).join('');
+function quickCardClick(e, url, title){
+  // Don't navigate if it was a drag
+  if(e.target.classList.contains('quick-del')) return;
+  trackVisit(url, title);
+  window.location.href = url;
 }
-function delBookmark(e,i){e.preventDefault();e.stopPropagation();bookmarks.splice(i,1);save('zxy_bk',bookmarks);renderBookmarks();}
+
+function qlDragStart(e, idx){
+  dragSrcIdx = idx;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', idx);
+  setTimeout(()=> e.target.classList.add('dragging'), 0);
+}
+function qlDragOver(e, idx){
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  // Only allow reordering user quickLinks (not pinned)
+  if(idx >= PINNED_LINKS.length && dragSrcIdx >= PINNED_LINKS.length && idx !== dragSrcIdx){
+    document.querySelectorAll('.quick-card').forEach(c => c.classList.remove('drag-over'));
+    e.currentTarget.classList.add('drag-over');
+  }
+}
+function qlDragLeave(e){e.currentTarget.classList.remove('drag-over');}
+function qlDrop(e, toIdx){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const fromIdx = dragSrcIdx;
+  // Only reorder user links (skip pinned)
+  if(fromIdx < PINNED_LINKS.length || toIdx < PINNED_LINKS.length) return;
+  if(fromIdx === toIdx) return;
+  const from = fromIdx - PINNED_LINKS.length;
+  const to   = toIdx   - PINNED_LINKS.length;
+  const moved = quickLinks.splice(from, 1)[0];
+  quickLinks.splice(to, 0, moved);
+  save('zxy_quick', quickLinks);
+  renderQuick();
+}
+function qlDragEnd(){
+  document.querySelectorAll('.quick-card').forEach(c => {
+    c.classList.remove('dragging','drag-over');
+  });
+  dragSrcIdx = -1;
+}
+
+function delQuick(e,i){e.stopPropagation();quickLinks.splice(i,1);save('zxy_quick',quickLinks);renderQuick();}
 
 // ── RECENTS ──
 function renderRecents(){
@@ -1299,7 +1323,7 @@ function renderRecents(){
   if(!showRecents||!recents.length){sec.style.display='none';return;}
   sec.style.display='block';
   document.getElementById('recent-grid').innerHTML=recents.slice(0,8).map(r=>`
-    <div class="recent-card" onclick="window.open('${esc(r.url)}','_blank')">
+    <div class="recent-card" onclick="window.location.href='${esc(r.url)}'">
       <div class="recent-host"><img src="${favUrl(r.url)}" width="12" height="12" style="border-radius:3px" onerror="this.style.display='none'" alt="">${esc(hostname(r.url))}</div>
       <div class="recent-title">${esc(r.title)}</div>
       <div class="recent-time">${timeAgo(r.ts)}</div>
@@ -1307,7 +1331,7 @@ function renderRecents(){
 }
 function hostname(u){try{return new URL(u).hostname.replace('www.','')}catch{return u}}
 function timeAgo(ts){const s=Math.floor((Date.now()-ts)/1e3);if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
-function openUrl(url,title){trackVisit(url,title);window.open(url,'_blank');}
+function openUrl(url,title){trackVisit(url,title);window.location.href=url;}
 function trackVisit(url,title){
   recents=recents.filter(r=>r.url!==url);
   recents.unshift({url,title,ts:Date.now()});
@@ -1318,7 +1342,6 @@ function trackVisit(url,title){
 
 // ── MODALS ──
 function openAddQuick(){document.getElementById('ql-title').value='';document.getElementById('ql-url').value='';document.getElementById('modal-quick').classList.add('open');}
-function openAddBookmark(){document.getElementById('bk-title-inp').value='';document.getElementById('bk-url-inp').value='';document.getElementById('modal-bk').classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function addQuickLink(){
   const t=document.getElementById('ql-title').value.trim();
@@ -1326,13 +1349,6 @@ function addQuickLink(){
   if(!t||!u) return;
   if(!/^https?:\/\//i.test(u)) u='https://'+u;
   quickLinks.push({label:t,url:u});save('zxy_quick',quickLinks);renderQuick();closeModal('modal-quick');
-}
-function addBookmark(){
-  const t=document.getElementById('bk-title-inp').value.trim();
-  let u=normalizeUrl(document.getElementById('bk-url-inp').value.trim());
-  if(!t||!u) return;
-  if(!/^https?:\/\//i.test(u)) u='https://'+u;
-  bookmarks.push({title:t,url:u});save('zxy_bk',bookmarks);renderBookmarks();closeModal('modal-bk');
 }
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
 
@@ -1430,13 +1446,7 @@ async function _applyRemoteState(msg){
   if(musicPresets[currentTrackIdx]) updateMusicBar(musicPresets[currentTrackIdx].name);
   updateMusicBarState();
 }
-function updateSyncPill(){
-  const pill=document.getElementById('sync-pill'),label=document.getElementById('sync-label');
-  if(!syncChannel){pill.classList.remove('visible');return;}
-  pill.classList.add('visible');
-  if(isLeader){pill.classList.remove('follower');label.textContent='lead';}
-  else{pill.classList.add('follower');label.textContent='sync';}
-}
+function updateSyncPill(){ /* sync pill removed */ }
 window.addEventListener('beforeunload',()=>{if(isLeader){localStorage.removeItem(LEADER_KEY);syncBroadcast('leader_gone');}});
 
 // ── MUSIC ──
@@ -1650,7 +1660,7 @@ async function init(){
   applyTheme();
   document.getElementById('tog-recents').checked=showRecents;
   document.getElementById('tog-24h').checked=use24h;
-  renderQuick();renderBookmarks();renderRecents();
+  renderQuick();renderRecents();
   updateClock();setInterval(updateClock,5000);
   initEngineBar();_syncVolumePillUI();
   loadMusicMeta();loadPlaylists();
